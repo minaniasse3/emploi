@@ -1,71 +1,45 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { Recruteur } from '../../models/recruteur.model';
-import { Offre } from '../../models/offre.model';
 
 @Component({
   selector: 'app-liste-recruteurs',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
   template: `
-    <div class="space-y-6">
-      <div class="flex justify-between items-center">
-        <h2 class="text-2xl font-bold text-gray-900">Liste des recruteurs</h2>
-        <a routerLink="/recruteurs/ajouter" 
-           class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          Ajouter un recruteur
-        </a>
-      </div>
-
-      <!-- Liste des recruteurs -->
-      <div class="grid gap-6">
-        <div *ngFor="let recruteur of recruteurs" 
-             class="bg-white p-6 rounded-lg shadow-md">
-          <div class="flex justify-between items-start">
-            <div>
-              <h3 class="text-xl font-semibold text-gray-900">
-                {{ recruteur.nom_entreprise }}
-              </h3>
-              
-              <!-- Bouton pour afficher/masquer les offres -->
-              <button (click)="toggleOffres(recruteur)"
-                      class="mt-2 text-blue-600 hover:text-blue-800">
-                {{ recruteur.showOffres ? 'Masquer les offres' : 'Voir les offres' }}
-              </button>
-            </div>
+    <div class="container mx-auto px-4 py-8">
+      <h1 class="text-3xl font-bold mb-6 text-gray-800">Liste des recruteurs</h1>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div *ngFor="let recruteur of recruteurs" class="bg-white rounded-lg shadow-md p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-gray-800">{{recruteur.nom}}</h2>
+            <span class="text-sm text-gray-500">{{recruteur.secteur_activite}}</span>
           </div>
-
-          <!-- Liste des offres du recruteur -->
-          <div *ngIf="recruteur.showOffres" class="mt-4">
-            <div *ngIf="recruteur.offres?.length; else noOffres"
-                 class="space-y-4">
-              <div *ngFor="let offre of recruteur.offres"
-                   class="bg-gray-50 p-4 rounded">
-                <h4 class="font-medium text-gray-900">{{ offre.titre }}</h4>
-                <p class="text-gray-600 mt-1">{{ offre.description }}</p>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2"
-                      [ngClass]="{
-                        'bg-green-100 text-green-800': offre.type_contrat === 'CDI',
-                        'bg-blue-100 text-blue-800': offre.type_contrat === 'CDD',
-                        'bg-yellow-100 text-yellow-800': offre.type_contrat === 'Stage',
-                        'bg-purple-100 text-purple-800': offre.type_contrat === 'Freelance'
-                      }">
-                  {{ offre.type_contrat }}
-                </span>
-              </div>
-            </div>
-            <ng-template #noOffres>
-              <p class="text-gray-500 italic">Aucune offre publiée</p>
-            </ng-template>
+          <div class="space-y-2 text-gray-600">
+            <p><span class="font-medium">Entreprise:</span> {{recruteur.entreprise}}</p>
+            <p><span class="font-medium">Email:</span> {{recruteur.email}}</p>
+            <p><span class="font-medium">Téléphone:</span> {{recruteur.telephone}}</p>
+            <p><span class="font-medium">Adresse:</span> {{recruteur.adresse}}</p>
+          </div>
+          <div class="mt-4 pt-4 border-t border-gray-200 flex justify-end space-x-2">
+            <button (click)="voirOffres(recruteur.id!)" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+              Voir les offres
+            </button>
+            <button (click)="supprimerRecruteur(recruteur.id!)" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+              Supprimer
+            </button>
           </div>
         </div>
       </div>
     </div>
-  `,
-  styles: []
+  `
 })
 export class ListeRecruteursComponent implements OnInit {
-  recruteurs: (Recruteur & { showOffres?: boolean; offres?: Offre[] })[] = [];
+  recruteurs: Recruteur[] = [];
 
-  constructor(private apiService: ApiService) { }
+  constructor(private apiService: ApiService) {}
 
   ngOnInit(): void {
     this.loadRecruteurs();
@@ -73,11 +47,8 @@ export class ListeRecruteursComponent implements OnInit {
 
   loadRecruteurs(): void {
     this.apiService.getRecruteurs().subscribe({
-      next: (recruteurs) => {
-        this.recruteurs = recruteurs.map(r => ({
-          ...r,
-          showOffres: false
-        }));
+      next: (data) => {
+        this.recruteurs = data;
       },
       error: (error) => {
         console.error('Erreur lors du chargement des recruteurs:', error);
@@ -85,18 +56,26 @@ export class ListeRecruteursComponent implements OnInit {
     });
   }
 
-  toggleOffres(recruteur: Recruteur & { showOffres?: boolean; offres?: Offre[] }): void {
-    recruteur.showOffres = !recruteur.showOffres;
-    
-    // Charger les offres si elles n'ont pas encore été chargées
-    if (recruteur.showOffres && !recruteur.offres) {
-      this.apiService.getOffresRecruteur(recruteur.id!).subscribe({
-        next: (offres) => {
-          recruteur.offres = offres;
+  voirOffres(recruteurId: number): void {
+    this.apiService.getOffresByRecruteur(recruteurId).subscribe({
+      next: (offres) => {
+        console.log('Offres du recruteur:', offres);
+        // Implémenter la logique pour afficher les offres
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des offres:', error);
+      }
+    });
+  }
+
+  supprimerRecruteur(id: number): void {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce recruteur ?')) {
+      this.apiService.deleteRecruteur(id).subscribe({
+        next: () => {
+          this.recruteurs = this.recruteurs.filter(r => r.id !== id);
         },
         error: (error) => {
-          console.error('Erreur lors du chargement des offres:', error);
-          recruteur.showOffres = false;
+          console.error('Erreur lors de la suppression:', error);
         }
       });
     }

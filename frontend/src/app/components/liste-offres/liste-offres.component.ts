@@ -1,113 +1,94 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { ApiService } from '../../services/api.service';
-import { Offre, OffresResponse } from '../../models/offre.model';
+import { Offre } from '../../models/offre.model';
 
 @Component({
   selector: 'app-liste-offres',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
   template: `
-    <div class="space-y-6">
-      <div class="flex justify-between items-center">
-        <h2 class="text-2xl font-bold text-gray-900">Liste des offres d'emploi</h2>
-        <a routerLink="/offres/ajouter" 
-           class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          Ajouter une offre
-        </a>
+    <div class="container mx-auto px-4 py-8">
+      <h1 class="text-3xl font-bold mb-6 text-gray-800">Offres d'emploi</h1>
+      
+      <!-- Loading State -->
+      <div *ngIf="loading" class="flex justify-center items-center py-8">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
 
-      <!-- Barre de recherche -->
-      <div class="flex gap-4">
-        <input type="text" 
-               [(ngModel)]="searchKeyword"
-               placeholder="Rechercher une offre..." 
-               class="flex-1 p-2 border rounded">
-        <button (click)="searchOffres()"
-                class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
-          Rechercher
-        </button>
-      </div>
-
-      <!-- Liste des offres -->
-      <div class="grid gap-6">
-        <div *ngFor="let offre of offres" 
-             class="bg-white p-6 rounded-lg shadow-md">
-          <h3 class="text-xl font-semibold text-gray-900">{{ offre.titre }}</h3>
-          <p class="mt-2 text-gray-600">{{ offre.description }}</p>
-          <div class="mt-4 flex justify-between items-center">
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
-                  [ngClass]="{
-                    'bg-green-100 text-green-800': offre.type_contrat === 'CDI',
-                    'bg-blue-100 text-blue-800': offre.type_contrat === 'CDD',
-                    'bg-yellow-100 text-yellow-800': offre.type_contrat === 'Stage',
-                    'bg-purple-100 text-purple-800': offre.type_contrat === 'Freelance'
-                  }">
-              {{ offre.type_contrat }}
-            </span>
-            <span class="text-sm text-gray-500">
-              {{ offre.recruteur?.nom_entreprise }}
-            </span>
+      <!-- Error State -->
+      <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm text-red-700">
+              {{ errorMessage }}
+            </p>
           </div>
         </div>
       </div>
 
-      <!-- Pagination -->
-      <div *ngIf="totalPages > 1" class="flex justify-center gap-2 mt-6">
-        <button *ngFor="let page of pages"
-                (click)="changePage(page)"
-                [class.bg-blue-600]="currentPage === page"
-                [class.text-white]="currentPage === page"
-                class="px-3 py-1 rounded border hover:bg-blue-600 hover:text-white">
-          {{ page }}
-        </button>
+      <!-- No Data State -->
+      <div *ngIf="!loading && !error && offres.length === 0" class="text-center py-8">
+        <p class="text-gray-500">Aucune offre d'emploi disponible pour le moment.</p>
+      </div>
+
+      <!-- Data Display -->
+      <div *ngIf="!loading && !error && offres.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div *ngFor="let offre of offres" class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-xl font-semibold mb-2">{{offre.titre}}</h2>
+          <p class="text-gray-600 mb-4">{{offre.description}}</p>
+          <div class="flex justify-between items-center text-sm text-gray-500">
+            <span>{{offre.type_contrat}}</span>
+            <span>{{offre.localisation}}</span>
+          </div>
+          <div class="mt-4 pt-4 border-t border-gray-200">
+            <p class="text-gray-700"><span class="font-medium">Entreprise:</span> {{offre.recruteur?.entreprise}}</p>
+            <p class="text-gray-700"><span class="font-medium">Salaire:</span> {{offre.salaire}}</p>
+          </div>
+          <div class="mt-4 flex justify-end">
+            <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+              Postuler
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  `,
-  styles: []
+  `
 })
 export class ListeOffresComponent implements OnInit {
   offres: Offre[] = [];
-  currentPage = 1;
-  totalPages = 1;
-  pages: number[] = [];
-  searchKeyword = '';
+  loading = false;
+  error = false;
+  errorMessage = '';
 
-  constructor(private apiService: ApiService) { }
+  constructor(private apiService: ApiService) {}
 
   ngOnInit(): void {
     this.loadOffres();
   }
 
   loadOffres(): void {
-    this.apiService.getOffres(this.currentPage).subscribe({
-      next: (response: OffresResponse) => {
-        this.offres = response.data;
-        this.totalPages = response.last_page;
-        this.pages = Array.from({length: this.totalPages}, (_, i) => i + 1);
+    this.loading = true;
+    this.error = false;
+    this.errorMessage = '';
+
+    this.apiService.getOffres().subscribe({
+      next: (data) => {
+        this.offres = data;
+        this.loading = false;
       },
       error: (error) => {
         console.error('Erreur lors du chargement des offres:', error);
-        // Ici, vous pourriez ajouter une notification d'erreur pour l'utilisateur
+        this.error = true;
+        this.errorMessage = error.message || 'Une erreur est survenue lors du chargement des offres.';
+        this.loading = false;
       }
     });
-  }
-
-  changePage(page: number): void {
-    this.currentPage = page;
-    this.loadOffres();
-  }
-
-  searchOffres(): void {
-    if (this.searchKeyword.trim()) {
-      this.apiService.searchOffres(this.searchKeyword).subscribe({
-        next: (offres) => {
-          this.offres = offres;
-          this.totalPages = 1; // Réinitialiser la pagination pour les résultats de recherche
-        },
-        error: (error) => {
-          console.error('Erreur lors de la recherche:', error);
-        }
-      });
-    } else {
-      this.loadOffres(); // Si la recherche est vide, charger toutes les offres
-    }
   }
 }

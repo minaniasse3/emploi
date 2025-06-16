@@ -7,24 +7,27 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Exécute les migrations.
+     * Run the migrations.
      */
     public function up(): void
     {
         Schema::create('offres', function (Blueprint $table) {
-            $table->id(); // Crée une colonne ID auto-incrémentée
-            $table->string('titre'); // Titre de l'offre d'emploi
-            $table->text('description'); // Description détaillée de l'offre
-            $table->string('type_contrat'); // Type de contrat (CDI, CDD, Stage, etc.)
-            $table->foreignId('recruteur_id') // Clé étrangère vers la table recruteurs
-                  ->constrained('recruteurs')
-                  ->onDelete('cascade'); // Supprime les offres si le recruteur est supprimé
-            $table->timestamps(); // Crée created_at et updated_at
+            $table->id();
+            $table->string('titre');
+            $table->text('description');
+            $table->string('type_contrat');
+            $table->string('localisation');
+            $table->string('salaire');
+            $table->foreignId('recruteur_id')->constrained('recruteurs')->onDelete('cascade');
+            $table->text('competences_requises');
+            $table->date('date_limite');
+            $table->string('statut');
+            $table->timestamps();
         });
     }
 
     /**
-     * Annule les migrations.
+     * Reverse the migrations.
      */
     public function down(): void
     {

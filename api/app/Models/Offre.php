@@ -23,7 +23,12 @@ class Offre extends Model
         'titre',
         'description',
         'type_contrat',
-        'recruteur_id'
+        'localisation',
+        'salaire',
+        'recruteur_id',
+        'competences_requises',
+        'date_limite',
+        'statut'
     ];
 
     /**

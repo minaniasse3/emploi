@@ -33,7 +33,12 @@ class OffreService
             'titre' => $data['titre'],
             'description' => $data['description'],
             'type_contrat' => $data['type_contrat'],
-            'recruteur_id' => $data['recruteur_id']
+            'localisation' => $data['localisation'],
+            'salaire' => $data['salaire'],
+            'recruteur_id' => $data['recruteur_id'],
+            'competences_requises' => $data['competences_requises'],
+            'date_limite' => $data['date_limite'],
+            'statut' => $data['statut']
         ]);
     }
 
