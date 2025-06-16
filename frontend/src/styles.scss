@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Styles globaux */
+body {
+  @apply bg-gray-50;
+}
+
+/* Styles personnalisés pour les formulaires */
+input, select, textarea {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm;
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+}
+
+/* Styles pour les boutons */
+.btn {
+  @apply px-4 py-2 rounded-md font-medium transition-colors duration-200;
+}
+
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.btn-secondary {
+  @apply bg-gray-200 text-gray-700 hover:bg-gray-300;
+}
+
+/* Styles pour les cartes */
+.card {
+  @apply bg-white rounded-lg shadow-md p-6;
+}
+
+/* Styles pour les badges de type de contrat */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-cdi {
+  @apply bg-green-100 text-green-800;
+}
+
+.badge-cdd {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.badge-stage {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.badge-freelance {
+  @apply bg-purple-100 text-purple-800;
+}
+
+/* Styles pour les messages d'erreur */
+.error-message {
+  @apply text-red-600 text-sm mt-1;
+}
+
+/* Styles pour la pagination */
+.pagination {
+  @apply flex justify-center gap-2 mt-6;
+}
+
+.pagination-item {
+  @apply px-3 py-1 rounded border hover:bg-blue-600 hover:text-white transition-colors duration-200;
+}
+
+.pagination-item.active {
+  @apply bg-blue-600 text-white;
+}
